@@ -1,9 +1,9 @@
 use std::error::Error;
 use std::process::exit;
 use reqwest::Url;
-use yaserde::ser::to_string;
+use yaserde::de::from_str;
 use crate::hp_api::HpApi;
-use crate::objects::{ScanStatus, WalkupDestination};
+use crate::objects::WalkupDestination;
 
 mod objects;
 mod hp_api;
@@ -19,6 +19,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 		name: "Rust".to_string(),
 		link_type: "Network".to_string(),
 		resource_uri: None,
+		settings: None,
 	};
 
 	let _ = api.add_destination(dest);

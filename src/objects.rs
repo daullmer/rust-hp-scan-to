@@ -8,6 +8,7 @@ rename = "WalkupScanToCompDestination",
 namespace = "wus: http://www.hp.com/schemas/imaging/con/ledm/walkupscan/2010/09/28",
 namespace = "dd: http://www.hp.com/schemas/imaging/con/dictionaries/1.0/",
 namespace = "dd3: http://www.hp.com/schemas/imaging/con/dictionaries/2009/04/06",
+namespace = "scantype: http://www.hp.com/schemas/imaging/con/ledm/scantype/2008/03/17"
 )]
 pub struct WalkupDestination {
 	#[yaserde(rename = "Hostname", prefix = "dd3")]
@@ -18,6 +19,32 @@ pub struct WalkupDestination {
 	pub link_type: String,
 	#[yaserde(rename = "ResourceURI", prefix = "dd")]
 	pub resource_uri: Option<String>,
+	#[yaserde(rename = "WalkupScanToCompSettings", prefix = "wus")]
+	pub settings: Option<WalkupScanToCompSettings>,
+}
+
+#[derive(YaDeserialize, YaSerialize, Default, Debug, PartialEq, Clone)]
+#[yaserde(
+prefix = "wus",
+namespace = "wus: http://www.hp.com/schemas/imaging/con/ledm/walkupscan/2010/09/28",
+rename = "WalkupScanToCompSettings",
+)]
+pub struct WalkupScanToCompSettings {
+	#[yaserde(rename = "ScanSettings", prefix = "scantype")]
+	pub settings: ChosenScanSettings,
+	#[yaserde(rename = "Shortcut", prefix = "wus")]
+	pub shortcut: String,
+}
+
+#[derive(YaDeserialize, YaSerialize, Default, Debug, PartialEq, Clone)]
+#[yaserde(
+prefix = "scantype",
+namespace = "dd: http://www.hp.com/schemas/imaging/con/dictionaries/1.0/"
+rename = "ScanSettings",
+)]
+pub struct ChosenScanSettings {
+	#[yaserde(rename = "ScanPlexMode", prefix = "dd")]
+	pub scan_plex_mode: String,
 }
 
 #[derive(YaDeserialize, YaSerialize, Default, Debug, PartialEq, Clone)]
