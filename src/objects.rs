@@ -135,11 +135,147 @@ pub struct ToneMap {
 	pub threshold: i32,
 }
 
+#[derive(YaDeserialize, YaSerialize, Default, Debug, PartialEq, Clone)]
+#[yaserde(
+namespace = "wus: http://www.hp.com/schemas/imaging/con/ledm/walkupscan/2010/09/28",
+prefix = "wus"
+rename = "WalkupScanToCompEvent"
+)]
+pub struct WalkupScanToCompEvent {
+	#[yaserde(rename = "EventType", prefix = "wus")]
+	pub event_type: String,
+}
+
+#[derive(YaDeserialize, YaSerialize, Default, Debug, PartialEq, Clone)]
+#[yaserde(
+namespace = "ev: http://www.hp.com/schemas/imaging/con/ledm/events/2007/09/16",
+prefix = "ev"
+rename = "EventTable"
+)]
+pub struct EventTable {
+	#[yaserde(prefix = "ev", rename = "Event")]
+	pub events: Vec<Event>,
+}
+
+#[derive(YaDeserialize, YaSerialize, Default, Debug, PartialEq, Clone)]
+#[yaserde(
+namespace = "ev: http://www.hp.com/schemas/imaging/con/ledm/events/2007/09/16",
+namespace = "dd: http://www.hp.com/schemas/imaging/con/dictionaries/1.0/",
+prefix = "ev"
+rename = "Event"
+)]
+pub struct Event {
+	#[yaserde(prefix = "dd", rename = "AgingStamp")]
+	pub aging_stamp: String,
+	#[yaserde(prefix = "dd", rename = "UnqualifiedEventCategory")]
+	pub unqualified_event_category: String,
+	#[yaserde(rename = "Payload",)]
+	pub payloads: Vec<Payload>,
+}
+
+#[derive(YaDeserialize, YaSerialize, Default, Debug, PartialEq, Clone)]
+#[yaserde(
+namespace = "ev: http://www.hp.com/schemas/imaging/con/ledm/events/2007/09/16",
+namespace = "dd: http://www.hp.com/schemas/imaging/con/dictionaries/1.0/",
+prefix = "ev"
+rename = "Payload"
+)]
+pub struct Payload {
+	#[yaserde(prefix = "dd", rename = "ResourceURI")]
+	pub resource_uri: String,
+	#[yaserde(prefix = "dd", rename = "ResourceType")]
+	pub resource_type: String,
+}
+
+#[derive(YaDeserialize, YaSerialize, Default, Debug, PartialEq, Clone)]
+#[yaserde(
+namespace = "j: http://www.hp.com/schemas/imaging/con/ledm/jobs/2009/04/30",
+prefix = "j"
+rename = "Job"
+)]
+pub struct Job {
+	#[yaserde(prefix = "j", rename = "JobUrl")]
+	pub url: String,
+	#[yaserde(prefix = "j", rename = "JobState")]
+	pub state: String,
+	#[yaserde(prefix = "j", rename = "JobSource")]
+	pub source: String,
+	#[yaserde(prefix = "j", rename = "JobCategory")]
+	pub category: String,
+	#[yaserde(rename = "ScanJob", namespace = "http://www.hp.com/schemas/imaging/con/cnx/scan/2008/08/19")]
+	pub scan_job: ScanJob,
+}
+
+#[derive(YaDeserialize, YaSerialize, Default, Debug, PartialEq, Clone)]
+#[yaserde(
+namespace = "http://www.hp.com/schemas/imaging/con/cnx/scan/2008/08/19",
+rename = "ScanJob"
+)]
+pub struct ScanJob {
+	#[yaserde(rename = "PreScanPage")]
+	pub pre_scan_page: Vec<PreScanPage>,
+	#[yaserde(rename = "PostScanPage")]
+	pub post_scan_page: Vec<PostScanPage>,
+}
+
+#[derive(YaDeserialize, YaSerialize, Default, Debug, PartialEq, Clone)]
+#[yaserde(
+namespace = "http://www.hp.com/schemas/imaging/con/cnx/scan/2008/08/19",
+rename = "PreScanPage"
+)]
+pub struct PreScanPage {
+	#[yaserde(rename = "PageNumber")]
+	pub number: i32,
+	#[yaserde(rename = "PageState")]
+	pub state: String,
+	#[yaserde(rename = "BinaryURL")]
+	pub binary_url: String,
+	#[yaserde(rename = "ImageOrientation")]
+	pub image_orientation: String,
+}
+
+#[derive(YaDeserialize, YaSerialize, Default, Debug, PartialEq, Clone)]
+#[yaserde(
+namespace = "http://www.hp.com/schemas/imaging/con/cnx/scan/2008/08/19",
+rename = "PreScanPage"
+)]
+pub struct PostScanPage {
+	#[yaserde(rename = "PageNumber")]
+	pub number: i32,
+	#[yaserde(rename = "PageState")]
+	pub state: String,
+	#[yaserde(rename = "TotalLines")]
+	pub total_lines: i32,
+}
+
 #[derive(Debug, Clone)]
 pub struct GetDestinationError;
 
 #[derive(Debug, Clone)]
 pub struct AddDestinationError;
+
+#[derive(Debug, Clone)]
+pub struct DeleteDestinationError;
+
+#[derive(Debug, Clone)]
+pub struct DownloadError;
+
+#[derive(Debug, Clone)]
+pub struct ApiError {
+	pub details: String,
+}
+
+impl ApiError {
+	pub fn new(msg: &str) -> ApiError {
+		ApiError{details: msg.to_string()}
+	}
+}
+
+impl fmt::Display for ApiError {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		write!(f,"{}",self.details)
+	}
+}
 
 impl fmt::Display for GetDestinationError {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -149,6 +285,18 @@ impl fmt::Display for GetDestinationError {
 
 impl fmt::Display for AddDestinationError {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-		write!(f, "Error adding walkup destionations")
+		write!(f, "Error adding walkup destionation")
+	}
+}
+
+impl fmt::Display for DeleteDestinationError {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		write!(f, "Error deleting walkup destionation")
+	}
+}
+
+impl fmt::Display for DownloadError {
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		write!(f, "Error downloading file")
 	}
 }

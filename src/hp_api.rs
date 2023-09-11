@@ -3,7 +3,7 @@ use reqwest::{StatusCode, Url};
 use uuid::Uuid;
 use yaserde::de::from_str;
 use yaserde::ser::to_string;
-use crate::objects::{AddDestinationError, GetDestinationError, WalkupDestination, WalkupDestinations};
+use crate::objects::{AddDestinationError, DeleteDestinationError, GetDestinationError, DownloadError, WalkupDestination, WalkupDestinations, WalkupScanToCompEvent, ApiError, EventTable, Job, ScanSettings, ScanJob};
 
 pub struct HpApi {
 	client: Client,
@@ -53,17 +53,10 @@ impl<'a> HpApi {
 		let str = to_string(&new_destination)
 			.expect("Error converting WalkupDestionation to XML");
 
-		let client = reqwest::blocking::ClientBuilder::new()
-			.http1_title_case_headers()
-			.build()
-			.expect("Error creating reqwest Cleint");
-
 		let url = self.base_url.join("/WalkupScanToComp/WalkupScanToCompDestinations")
 			.expect("Error generating URL");
 
-		log::debug!("New URL: {}", url);
-
-		let response = client.post(url)
+		let response = self.client.post(url)
 			.header("Content-Type", "text/xml")
 			.body(str)
 			.send()
@@ -92,11 +85,170 @@ impl<'a> HpApi {
 
 				log::debug!("Destination UUID: {}", &uuid);
 
-				return Ok(uuid)
+				Ok(uuid)
 			}
 			_ => {
 				log::error!("Error adding a destination! Response code: {}", response.status());
-				return Err(AddDestinationError)
+				Err(AddDestinationError)
+			}
+		}
+	}
+
+	pub fn delete_destination(&'a self, uuid: Uuid) -> Result<(), DeleteDestinationError> {
+		log::info!("Deleteing destination with uuid {}", &uuid);
+
+		let path = format!("/WalkupScanToComp/WalkupScanToCompDestinations/{}", &uuid);
+
+		let url = self.base_url.join(&path)
+			.expect("Error generating URL");
+
+		let response = self.client.delete(url)
+			.send()
+			.expect("Error sending DELETE WalkupScanToCompDestinations request");
+
+		match response.status() {
+			StatusCode::OK => {
+				log::info!("Deletion successful");
+				Ok(())
+			},
+			_ => {
+				log::error!("Error deleting destination");
+				Err(DeleteDestinationError)
+			}
+		}
+	}
+
+	pub fn get_eventtable(&'a self) -> Result<EventTable, ApiError> {
+		let url = self.base_url.join("/EventMgmt/EventTable")
+			.expect("Error generating URL");
+
+		let response = self.client.get(url)
+			.send()
+			.expect("Error sending download page request");
+
+		match response.status() {
+			StatusCode::OK => {
+				let text = response
+					.text()
+					.expect("Error reading text from response");
+				Ok(from_str(&text).unwrap())
+			}
+			_ => {
+				Err(ApiError::new("Error reading EventTable"))
+			}
+		}
+	}
+
+	pub fn get_eventtable_timeout(&'a self, timeout: i32) -> Result<EventTable, ApiError> {
+		let url = self.base_url.join("/EventMgmt/EventTable")
+			.expect("Error generating URL");
+
+		let query = vec![("timeout", timeout)];
+
+		let response = self.client.get(url)
+			.query(&query)
+			.send()
+			.expect("Error sending download page request");
+
+		match response.status() {
+			StatusCode::OK => {
+				let text = response
+					.text()
+					.expect("Error reading text from response");
+				Ok(from_str(&text).unwrap())
+			}
+			_ => {
+				Err(ApiError::new("Error reading EventTable"))
+			}
+		}
+	}
+
+	pub fn create_job(&'a self, job: ScanSettings) -> Result<String, ApiError> {
+		let str = to_string(&job)
+			.expect("Error converting ScanSettings to XML");
+
+		let url = self.base_url.join("/Scan/Jobs")
+			.expect("Error generating URL");
+
+		let response = self.client.post(url)
+			.header("Content-Type", "text/xml")
+			.body(str)
+			.send()
+			.expect("Error sending POST Scan/Jobs request");
+
+		match response.status() {
+			StatusCode::CREATED => {
+				let location = response
+					.headers()
+					.get("Location")
+					.expect("Missing Location header in response")
+					.to_str()
+					.expect("Could not map Location header to string");
+
+				log::info!("Successfully created new Scan Job with url {}", location);
+				Ok(location.to_string())
+			}
+			_ => {
+				log::error!("Error adding a scan job! Response code: {}", response.status());
+				Err(ApiError::new("Error adding a scan job"))
+			}
+		}
+	}
+
+	pub fn get_job_with_url(&'a self, url: String) -> Result<Job, ApiError> {
+		let response = self.client.get(url)
+			.send()
+			.expect("Error sending download page request");
+
+		match response.status() {
+			StatusCode::OK => {
+				let text = response
+					.text()
+					.expect("Error reading text from response");
+				Ok(from_str(&text).unwrap())
+			}
+			_ => {
+				Err(ApiError::new("Error reading WalkupScanToCompEvent"))
+			}
+		}
+	}
+
+	pub fn get_scantocomp_event(&'a self) -> Result<WalkupScanToCompEvent, ApiError> {
+		let url = self.base_url.join("/WalkupScanToComp/WalkupScanToCompEvent")
+			.expect("Error generating URL");
+
+		let response = self.client.get(url)
+			.send()
+			.expect("Error sending download page request");
+
+		match response.status() {
+			StatusCode::OK => {
+				let text = response
+					.text()
+					.expect("Error reading text from response");
+				Ok(from_str(&text).unwrap())
+			}
+			_ => {
+				Err(ApiError::new("Error reading WalkupScanToCompEvent"))
+			}
+		}
+	}
+
+	pub fn download_page(&'a self, path: String) -> Result<(), DownloadError> {
+		let url = self.base_url.join(&path)
+			.expect("Error generating URL");
+		let response = self.client.get(url)
+			.send()
+			.expect("Error sending download page request");
+
+		match response.status() {
+			StatusCode::OK => {
+				log::info!("Download Successful");
+				Ok(())
+			},
+			_ => {
+				log::error!("Error downloading page");
+				Err(DownloadError)
 			}
 		}
 	}

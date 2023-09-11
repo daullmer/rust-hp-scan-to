@@ -1,7 +1,5 @@
 use std::error::Error;
-use std::process::exit;
 use reqwest::Url;
-use yaserde::de::from_str;
 use crate::hp_api::HpApi;
 use crate::objects::WalkupDestination;
 
@@ -22,6 +20,8 @@ fn main() -> Result<(), Box<dyn Error>> {
 		settings: None,
 	};
 
-	let _ = api.add_destination(dest);
+	let uuid = api.add_destination(dest).unwrap();
+	let _ = api.get_walkup_destinations();
+	let _ = api.delete_destination(uuid);
 	Ok(())
 }
