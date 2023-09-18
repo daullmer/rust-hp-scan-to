@@ -3,11 +3,12 @@ use reqwest::{StatusCode, Url};
 use uuid::Uuid;
 use yaserde::de::from_str;
 use yaserde::ser::to_string;
-use crate::objects::{AddDestinationError, DeleteDestinationError, GetDestinationError, DownloadError, WalkupDestination, WalkupDestinations, WalkupScanToCompEvent, ApiError, EventTable, Job, ScanSettings, ScanJob};
+use crate::objects::{AddDestinationError, DeleteDestinationError, GetDestinationError, DownloadError, WalkupDestination, WalkupDestinations, WalkupScanToCompEvent, ApiError, EventTable, Job, ScanSettings};
 
 pub struct HpApi {
 	client: Client,
-	base_url: Url
+	base_url: Url,
+	active_destinations: Vec<Uuid>
 }
 
 impl<'a> HpApi {
@@ -22,6 +23,13 @@ impl<'a> HpApi {
 		HpApi {
 			client,
 			base_url,
+			active_destinations: Vec::new()
+		}
+	}
+
+	pub fn cleanup(&'a mut self) {
+		for destination in self.active_destinations.clone() {
+			let _ = self.delete_destination(destination);
 		}
 	}
 
@@ -49,7 +57,7 @@ impl<'a> HpApi {
 		}
 	}
 
-	pub fn add_destination(&'a self, new_destination: WalkupDestination) -> Result<Uuid, AddDestinationError> {
+	pub fn add_destination(&'a mut self, new_destination: WalkupDestination) -> Result<Uuid, AddDestinationError> {
 		let str = to_string(&new_destination)
 			.expect("Error converting WalkupDestionation to XML");
 
@@ -83,6 +91,8 @@ impl<'a> HpApi {
 				let uuid = Uuid::parse_str(uuid_string)
 					.expect("Location URL did not contain a valid UUID");
 
+				self.active_destinations.push(uuid);
+
 				log::debug!("Destination UUID: {}", &uuid);
 
 				Ok(uuid)
@@ -94,7 +104,7 @@ impl<'a> HpApi {
 		}
 	}
 
-	pub fn delete_destination(&'a self, uuid: Uuid) -> Result<(), DeleteDestinationError> {
+	pub fn delete_destination(&'a mut self, uuid: Uuid) -> Result<(), DeleteDestinationError> {
 		log::info!("Deleteing destination with uuid {}", &uuid);
 
 		let path = format!("/WalkupScanToComp/WalkupScanToCompDestinations/{}", &uuid);
@@ -108,6 +118,9 @@ impl<'a> HpApi {
 
 		match response.status() {
 			StatusCode::OK => {
+				self.active_destinations.iter()
+					.position(|id| *id == uuid)
+					.expect("Could not find uuid in active destinations");
 				log::info!("Deletion successful");
 				Ok(())
 			},
