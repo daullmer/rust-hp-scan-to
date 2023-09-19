@@ -1,4 +1,5 @@
-use std::io::{copy, Cursor, Read};
+use std::fs::File;
+use std::io::{copy, Cursor};
 use std::time::Duration;
 use reqwest::blocking::{ClientBuilder, Client};
 use reqwest::{StatusCode, Url};
@@ -38,6 +39,7 @@ impl<'a> HpApi {
 		}
 	}
 
+	#[allow(dead_code)]
 	pub fn get_walkup_destinations(&'a self) -> Result<WalkupDestinations, GetDestinationError> {
 		log::debug!("Making request for WalkupScanToCompDestinations");
 
@@ -63,7 +65,7 @@ impl<'a> HpApi {
 	}
 
 	pub fn get_walkup_destionation(&'a self, uuid: Uuid) -> Result<WalkupDestination, GetDestinationError> {
-		log::info!("Making request for WalkupScanToCompDestinations {}", uuid);
+		log::debug!("Making request for WalkupScanToCompDestinations {}", uuid);
 
 		let url = self.base_url.join("WalkupScanToComp/WalkupScanToCompDestinations/")
 			.expect("Error generating URL")
@@ -111,7 +113,7 @@ impl<'a> HpApi {
 					.expect("Could not map Location header to string");
 
 				log::info!("Successfully created new WalkupScanToCompDestinations with name {}", new_destination.name);
-				log::info!("Using location URL: {} to generate UUID", location);
+				log::debug!("Using location URL: {} to generate UUID", location);
 
 				let url_parts = location.split("/")
 					.collect::<Vec<&str>>();
@@ -136,7 +138,7 @@ impl<'a> HpApi {
 	}
 
 	pub fn delete_destination(&'a mut self, uuid: Uuid) -> Result<(), DeleteDestinationError> {
-		log::info!("Deleteing destination with uuid {}", &uuid);
+		log::debug!("Deleteing destination with uuid {}", &uuid);
 
 		let path = format!("/WalkupScanToComp/WalkupScanToCompDestinations/{}", &uuid);
 
@@ -152,7 +154,7 @@ impl<'a> HpApi {
 				self.active_destinations.iter()
 					.position(|id| *id == uuid)
 					.expect("Could not find uuid in active destinations");
-				log::info!("Deletion successful");
+				log::info!("Deletion of destination {} successful", uuid);
 				Ok(())
 			},
 			_ => {
@@ -163,7 +165,7 @@ impl<'a> HpApi {
 	}
 
 	pub fn get_eventtable(&'a mut self) -> Result<EventTable, ApiError> {
-		log::info!("Getting eventtable");
+		log::debug!("Getting eventtable");
 
 		let url = self.base_url.join("/EventMgmt/EventTable")
 			.expect("Error generating URL");
@@ -198,7 +200,7 @@ impl<'a> HpApi {
 	}
 
 	pub fn get_eventtable_timeout(&'a mut self, timeout: i32) -> Result<EventTable, ApiError> {
-		log::info!("Getting eventtable with timeout {}", timeout);
+		log::debug!("Getting eventtable with timeout {}", timeout);
 
 		let url = self.base_url.join("/EventMgmt/EventTable")
 			.expect("Error generating URL");
@@ -236,7 +238,7 @@ impl<'a> HpApi {
 	}
 
 	pub fn create_job(&'a self, job: ScanSettings) -> Result<String, ApiError> {
-		log::info!("Creating new scan job");
+		log::debug!("Creating new scan job");
 
 		let str = to_string(&job)
 			.expect("Error converting ScanSettings to XML");
@@ -261,7 +263,7 @@ impl<'a> HpApi {
 					.to_str()
 					.expect("Could not map Location header to string");
 
-				log::info!("Successfully created new Scan Job with url {}", location);
+				log::debug!("Successfully created new Scan Job with url {}", location);
 				Ok(location.to_string())
 			}
 			_ => {
@@ -333,7 +335,7 @@ impl<'a> HpApi {
 		}
 	}
 
-	pub fn download_page(&'a self, path: &String) -> Result<(), DownloadError> {
+	pub fn download_page(&'a self, path: &String) -> Result<File, DownloadError> {
 		let url = self.base_url.join(&path)
 			.expect("Error generating URL");
 		let response = self.client.get(url)
@@ -342,12 +344,14 @@ impl<'a> HpApi {
 
 		match response.status() {
 			StatusCode::OK => {
-				let mut file = std::fs::File::create("./file.pdf")
+				let mut file = File::create("./file.pdf")
 					.expect("could not creat file");
-				let mut content =  Cursor::new(response.bytes().expect("Could not turn response into bytes"));
+
+				let mut content =  Cursor::new(response.bytes()
+					.expect("Could not turn response into bytes"));
 				let _ = copy(&mut content, &mut file);
-				log::info!("Download Successful");
-				Ok(())
+				log::debug!("Download Successful");
+				Ok(file)
 			},
 			_ => {
 				log::error!("Error downloading page");

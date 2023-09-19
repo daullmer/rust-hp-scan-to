@@ -1,3 +1,4 @@
+use std::time::SystemTime;
 use crate::objects::{ScanSettings, ScanStatus, ToneMap, WalkupScanToCompSettings};
 
 pub fn create_job(status: ScanStatus, settings: WalkupScanToCompSettings) -> ScanSettings {
@@ -8,8 +9,8 @@ pub fn create_job(status: ScanStatus, settings: WalkupScanToCompSettings) -> Sca
 	};
 
 	let (format, content) = match settings.shortcut.as_str() {
-		"SaveDocument1" => { ("Jpeg", "Document") },
-		"SavePhoto1" => { ("Jpeg", "Photo" ) },
+		"SaveDocument1" => { ("Pdf", "Document") },
+		"SavePhoto1" => { ("Pdf", "Photo" ) },
 		_ => {panic!("Unexpected shortcut {}", settings.shortcut)}
 	};
 
@@ -40,4 +41,9 @@ pub fn create_job(status: ScanStatus, settings: WalkupScanToCompSettings) -> Sca
 		noise_removal: 0,
 		content_type: content.to_string(),
 	}
+}
+
+pub fn create_filename() -> String {
+	let now = chrono::offset::Local::now();
+	format!("Scan_{}.pdf", now.format("%FZ%H-%M"))
 }
