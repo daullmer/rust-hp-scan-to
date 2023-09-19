@@ -75,7 +75,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 		// scanner shutdown handling
 		if event_table.events.iter()
-			.any(|&event| event.unqualified_event_category == shutdown_event) {
+			.any(|event| event.unqualified_event_category == shutdown_event) {
 			log::info!("Scanner was shut down. Closing program now.");
 			exit(0);
 		}
