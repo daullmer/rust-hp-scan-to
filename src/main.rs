@@ -18,7 +18,9 @@ mod helpers;
 fn main() -> Result<(), Box<dyn Error>> {
 	env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
 
-	let base_url = Url::parse("http://192.168.2.3")?;
+	let printer_mail = std::env::vars().find(|var| var.0 == "PRINTER_URL").unwrap().1;
+
+	let base_url = Url::parse(&*printer_mail)?;
 	let api = HpApi::new(base_url);
 	let arc_api = Arc::new(Mutex::new(api));
 	let lock2 = Arc::clone(&arc_api);
@@ -33,6 +35,15 @@ fn main() -> Result<(), Box<dyn Error>> {
 		}
 	});
 
+	let mut api = lock2.lock().unwrap();
+
+	loop {
+		match api.connection_check() {
+			true => break,
+			false => thread::sleep(time::Duration::from_secs(1 * 60))
+		}
+	}
+
 	let dest = WalkupDestination {
 		hostname: "an Email".to_string(),
 		name: "an Email".to_string(),
@@ -41,7 +52,6 @@ fn main() -> Result<(), Box<dyn Error>> {
 		settings: None,
 	};
 
-	let mut api = lock2.lock().unwrap();
 	let _ = api.add_destination(dest).unwrap();
 	let _ = api.get_eventtable();
 	drop(api);

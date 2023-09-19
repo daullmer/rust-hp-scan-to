@@ -39,6 +39,29 @@ impl<'a> HpApi {
 		}
 	}
 
+	pub fn connection_check(&'a self) -> bool {
+		log::debug!("Checking printer availability");
+		let client = ClientBuilder::new()
+			.http1_title_case_headers()
+			.timeout(Duration::from_secs(5))
+			.build()
+			.expect("Error building the HP API Client");
+
+		let url = self.base_url.join("Scan/Status")
+			.expect("Error generating URL");
+
+		match client.get(url).send() {
+			Ok(_) => {
+				log::debug!("Printer reachable!");
+				true
+			}
+			Err(_) => {
+				log::debug!("Printer not reachable!");
+				false
+			}
+		}
+	}
+
 	#[allow(dead_code)]
 	pub fn get_walkup_destinations(&'a self) -> Result<WalkupDestinations, GetDestinationError> {
 		log::debug!("Making request for WalkupScanToCompDestinations");
