@@ -196,10 +196,11 @@ fn send_email() {
 }
 
 #[allow(dead_code)]
-fn shutdown(api: &Arc<Mutex<HpApi>>) {
+#[allow(unreachable_code)]
+fn shutdown(_api: &Arc<Mutex<HpApi>>) {
 	// TODO: Fix the mutex shit
 	std::process::exit(0);
-	let mut api = api.lock().unwrap();
+	let mut api = _api.lock().unwrap();
 	api.cleanup();
 	std::process::exit(0);
 }

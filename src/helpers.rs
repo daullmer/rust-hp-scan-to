@@ -1,4 +1,3 @@
-use std::time::SystemTime;
 use crate::objects::{ScanSettings, ScanStatus, ToneMap, WalkupScanToCompSettings};
 
 pub fn create_job(status: ScanStatus, settings: WalkupScanToCompSettings) -> ScanSettings {
