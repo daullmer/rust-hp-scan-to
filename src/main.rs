@@ -2,6 +2,7 @@ use std::error::Error;
 use std::sync::{Arc, Mutex};
 use std::{fs, thread, time};
 use std::io::Read;
+use std::process::exit;
 use reqwest::Url;
 use sendgrid::v3::{Attachment, Content, Email, Message, Personalization, Sender};
 use signal_hook::consts::TERM_SIGNALS;
@@ -69,7 +70,16 @@ fn main() -> Result<(), Box<dyn Error>> {
 		}
 
 		let target_event = "ScanEvent".to_string();
+		let shutdown_event = "PoweringDownEvent".to_string();
 		let event_table = event_table.unwrap();
+
+		// scanner shutdown handling
+		if event_table.events.iter()
+			.any(|&event| event.unqualified_event_category == shutdown_event) {
+			log::info!("Scanner was shut down. Closing program now.");
+			exit(0);
+		}
+
 		let events = event_table.events.iter()
 			.filter(|event| *event.unqualified_event_category == target_event)
 			.collect::<Vec<&Event>>();
