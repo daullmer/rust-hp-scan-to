@@ -108,9 +108,9 @@ pub struct ScanSettings {
 	#[yaserde(rename = "ToneMap")]
 	pub tone_map: ToneMap,
 	#[yaserde(rename = "SharpeningLevel")]
-	pub sharpening_level: i8,
+	pub sharpening_level: u8,
 	#[yaserde(rename = "NoiseRemoval")]
-	pub noise_removal: i8,
+	pub noise_removal: u8,
 	#[yaserde(rename = "ContentType")]
 	pub content_type: String
 }
@@ -142,7 +142,7 @@ prefix = "wus"
 rename = "WalkupScanToCompEvent"
 )]
 pub struct WalkupScanToCompEvent {
-	#[yaserde(rename = "EventType", prefix = "wus")]
+	#[yaserde(rename = "WalkupScanToCompEventType", prefix = "wus")]
 	pub event_type: String,
 }
 
