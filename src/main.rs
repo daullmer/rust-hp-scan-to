@@ -19,6 +19,12 @@ mod helpers;
 fn main() -> Result<(), Box<dyn Error>> {
 	env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
 
+	log::debug!("Environment variables:");
+
+	for (key, value) in std::env::vars() {
+		println!("{key}: {value}");
+	}
+
 	let printer_mail = std::env::vars().find(|var| var.0 == "PRINTER_URL").unwrap().1;
 
 	let base_url = Url::parse(&*printer_mail)?;
@@ -175,8 +181,10 @@ fn send_email() {
 		},
 	}
 
-	let to_mail = env_vars.find(|var| var.0 == "MAIL_TO").unwrap().1;
-	let from_mail = env_vars.find(|var| var.0 == "MAIL_FROM").unwrap().1;
+	let to_mail = env_vars.find(|var| var.0 == "MAIL_TO")
+		.expect("Error reading MAIL_TO env variable").1;
+	let from_mail = env_vars.find(|var| var.0 == "MAIL_FROM")
+		.expect("Error reading MAIL_FROM env variable").1;
 
 	log::debug!("Sending mail...");
 
