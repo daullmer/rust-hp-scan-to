@@ -1,6 +1,6 @@
 use std::error::Error;
 use std::sync::{Arc, Mutex};
-use std::{fs, thread, time};
+use std::{env, fs, thread, time};
 use std::io::Read;
 use std::process::exit;
 use reqwest::Url;
@@ -21,11 +21,11 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 	log::debug!("Environment variables:");
 
-	for (key, value) in std::env::vars() {
+	for (key, value) in env::vars() {
 		println!("{key}: {value}");
 	}
 
-	let printer_mail = std::env::vars().find(|var| var.0 == "PRINTER_URL").unwrap().1;
+	let printer_mail = env::vars().find(|var| var.0 == "PRINTER_URL").unwrap().1;
 
 	let base_url = Url::parse(&*printer_mail)?;
 	let api = HpApi::new(base_url);
@@ -181,9 +181,17 @@ fn send_email() {
 		},
 	}
 
-	let to_mail = env_vars.find(|var| var.0 == "MAIL_TO")
+	dbg!(env_vars);
+
+	let searched1 = env::vars().find(|var| var.0 == "MAIL_TO");
+	let searched2 = env::vars().find(|var| var.0 == "MAIL_FROM");
+
+	dbg!(&searched1);
+	dbg!(&searched2);
+
+	let to_mail = searched1
 		.expect("Error reading MAIL_TO env variable").1;
-	let from_mail = env_vars.find(|var| var.0 == "MAIL_FROM")
+	let from_mail = searched2
 		.expect("Error reading MAIL_FROM env variable").1;
 
 	log::debug!("Sending mail...");
