@@ -181,17 +181,9 @@ fn send_email() {
 		},
 	}
 
-	dbg!(env_vars);
-
-	let searched1 = env::vars().find(|var| var.0 == "MAIL_TO");
-	let searched2 = env::vars().find(|var| var.0 == "MAIL_FROM");
-
-	dbg!(&searched1);
-	dbg!(&searched2);
-
-	let to_mail = searched1
+	let to_mail = env::vars().find(|var| var.0 == "MAIL_TO")
 		.expect("Error reading MAIL_TO env variable").1;
-	let from_mail = searched2
+	let from_mail = env::vars().find(|var| var.0 == "MAIL_FROM")
 		.expect("Error reading MAIL_FROM env variable").1;
 
 	log::debug!("Sending mail...");

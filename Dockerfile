@@ -5,6 +5,6 @@ RUN cargo install --path .
 
 # Runtime image
 FROM debian:bookworm-slim
-RUN apt-get update && apt-get install -y apt-transport-https openssl
+RUN apt-get update && apt-get install -y apt-transport-https openssl ca-certificates
 COPY --from=builder /usr/local/cargo/bin/rust-hp /usr/local/bin/rust-hp
 CMD ["rust-hp"]
